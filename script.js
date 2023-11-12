@@ -15,28 +15,32 @@ let players = [];
 const fetchAllPlayers = async () => {
   try {
     const response = await fetch(`${APIURL}/players`);
-    const player = await response.json();
+    const players = await response.json();
     console.log("players", players);
     return players.data.players;
   } catch (err) {
     console.error("Uh oh, trouble fetching players!", err);
   }
 };
-console.log(fetchAllPlayers);
+// console.log(fetchAllPlayers);
 
-const fetchSinglePlayer = async (playerId) => {
+const fetchSinglePlayer = async (id) => {
   try {
-    const response = await fetch(`${APIURL}/players/${playerId}`);
+    const response = await fetch(`${APIURL}/players/${id}`);
     const info = await response.json();
     console.log("info", info);
     return info.data.player;
   } catch (err) {
-    console.error(`Oh no, trouble fetching player #${playerId}!`, err);
+    console.error(`Oh no, trouble fetching player #${id}!`, err);
   }
 };
 
 const addNewPlayer = async (playerObj) => {
   try {
+    const response = await fetch(`${APIURL}/players`);
+    const newPlayer = await response.json();
+    console.log("newPlayer", newPlayer);
+    return newPlayer.data.player;
   } catch (err) {
     console.error("Oops, something went wrong with adding that player!", err);
   }
@@ -44,6 +48,10 @@ const addNewPlayer = async (playerObj) => {
 
 const removePlayer = async (playerId) => {
   try {
+    const response = await fetch(`${APIURL}/players/${playerId}`);
+    const remove = await response.json();
+    console.log("remove", remove);
+    return remove.data.player;
   } catch (err) {
     console.error(
       `Whoops, trouble removing player #${playerId} from the roster!`,
@@ -95,13 +103,13 @@ const renderAllPlayers = (playerList) => {
   }
 };
 
-function renderSinglePlayer(player) {
+function renderSinglePlayer(id) {
   try {
     playerContainer.innerHTML = "";
     const playerContainerHTML = document.createElement("div");
     playerContainerHTML.classList.add("player");
     playerContainerHTML.innerHTML = `
-      <h2>${player.name}</h2>
+      <h2>${id.info}</h2>
      `;
 
     playerContainer.appendChild(playerContainerHTML);
