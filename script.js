@@ -37,10 +37,16 @@ const fetchSinglePlayer = async (id) => {
 
 const addNewPlayer = async (playerObj) => {
   try {
-    const response = await fetch(`${APIURL}/players`);
+    const response = await fetch(`${APIURL}/players`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(playerObj),
+    });
     const newPlayer = await response.json();
     console.log("newPlayer", newPlayer);
-    return newPlayer.data.player;
+    return newPlayer.data.newPlayer;
   } catch (err) {
     console.error("Oops, something went wrong with adding that player!", err);
   }
@@ -48,10 +54,12 @@ const addNewPlayer = async (playerObj) => {
 
 const removePlayer = async (playerId) => {
   try {
-    const response = await fetch(`${APIURL}/players/${playerId}`);
+    const response = await fetch(`${APIURL}/players/${playerId}`, {
+      method: "DELETE",
+    });
     const remove = await response.json();
     console.log("remove", remove);
-    return remove.data.player;
+    return;
   } catch (err) {
     console.error(
       `Whoops, trouble removing player #${playerId} from the roster!`,
@@ -88,13 +96,28 @@ const renderAllPlayers = (playerList) => {
       playerContainerHTML.classList.add("player");
       playerContainerHTML.innerHTML = `
       <h2>${players.name}</h2>
-      <button class="details-button">See Details</button>`;
+      <p>${players.breed}</p>
+      <p>${players.status}</p>
+      <p>${players.id}</p>
+      <img src="${players.imageUrl}"/>
+      
+      <button class="details-button">See Details</button> <button class="delete-button">Delete</button>`;
       const detailsButton =
         playerContainerHTML.querySelector(".details-button");
       detailsButton.addEventListener("click", async () => {
         const player = await fetchSinglePlayer(players.id);
         // console.log(player);
         renderSinglePlayer(player);
+      });
+      const deleteButton = playerContainerHTML.querySelector(".delete-button");
+      deleteButton.addEventListener("click", async () => {
+        try {
+          await removePlayer(players.id);
+          const nextPlayers = await fetchAllPlayers();
+          renderAllPlayers(nextPlayers);
+        } catch (err) {
+          console.error(err);
+        }
       });
       playerContainer.appendChild(playerContainerHTML);
     });
@@ -103,13 +126,18 @@ const renderAllPlayers = (playerList) => {
   }
 };
 
-function renderSinglePlayer(id) {
+async function renderSinglePlayer(player) {
   try {
+    console.log(player);
     playerContainer.innerHTML = "";
     const playerContainerHTML = document.createElement("div");
     playerContainerHTML.classList.add("player");
     playerContainerHTML.innerHTML = `
-      <h2>${id.info}</h2>
+      <h2>${player.name}</h2>
+      <p>${player.breed}</p>
+      <p>${player.status}</p>
+      <p>${player.id}</p>
+      <img src="${player.imageUrl}"/>
      `;
 
     playerContainer.appendChild(playerContainerHTML);
@@ -122,7 +150,7 @@ function renderSinglePlayer(id) {
  * It renders a form to the DOM, and when the form is submitted, it adds a new player to the database,
  * fetches all players from the database, and renders them to the DOM.
  */
-const renderNewPlayerForm = () => {
+const renderNewPlayerForm = async () => {
   try {
     const playerForm = document.createElement("form");
 
@@ -135,6 +163,20 @@ const renderNewPlayerForm = () => {
 
     <button type="submit" class="add-player">Add Puppy</button>
     `;
+
+    playerForm.addEventListener("submit", async function (event) {
+      event.preventDefault();
+      const playerName = document.getElementById("player-name").value;
+      const playerBreed = document.getElementById("player-breed").value;
+      try {
+        await addNewPlayer({ name: playerName, breed: playerBreed });
+        const players = await fetchAllPlayers();
+        renderAllPlayers(players);
+      } catch (err) {
+        console.error("Uh, oh, trouble adding new player!");
+      }
+    });
+    newPlayerFormContainer.appendChild(playerForm);
   } catch (err) {
     console.error("Uh oh, trouble rendering the new player form!", err);
   }
